@@ -225,7 +225,8 @@ label{font-size:13px;color:var(--ink-2);display:block;margin:0 0 6px;font-weight
     <h2>订单台账登录</h2>
     <p>请输入账号和密码</p>
     <input id="loginUser" type="text" placeholder="账号" autocomplete="username" style="font-size:16px;letter-spacing:1px;text-align:center;margin-bottom:10px">
-    <input id="loginPass" type="password" placeholder="密码" autocomplete="current-password" style="font-size:16px;letter-spacing:1px;text-align:center">
+    <input id="loginPass" type="password" placeholder="密码" autocomplete="current-password" style="font-size:16px;letter-spacing:1px;text-align:center;margin-bottom:14px">
+    <button id="btnLogin" style="width:100%;font-size:16px;padding:13px;border-radius:12px;background:linear-gradient(135deg,var(--pink),var(--pink-deep));color:#fff;font-weight:600;box-shadow:0 6px 18px rgba(240,90,133,.35)">登 录</button>
   </div>
 </div>
 
@@ -797,6 +798,7 @@ $('#importFile').addEventListener('change',e=>{
   rd.readAsText(f);
   e.target.value='';
 });
+$('#btnLogin').addEventListener('click',tryLogin);
 $('#loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')tryLogin()});
 
 /* ===== 初始化 ===== */
