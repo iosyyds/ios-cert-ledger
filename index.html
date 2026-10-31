@@ -218,13 +218,14 @@ label{font-size:13px;color:var(--ink-2);display:block;margin:0 0 6px;font-weight
 </head>
 <body>
 
-<!-- ===== PIN 锁 ===== -->
+<!-- ===== 登录锁 ===== -->
 <div id="lock" class="lock hidden">
   <div class="lock-in">
     <div class="logo"><svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15" r="1.4" fill="#fff" stroke="none"/></svg></div>
-    <h2>订单台账已锁定</h2>
-    <p>输入访问口令解锁</p>
-    <input id="pinInput" type="password" inputmode="numeric" placeholder="口令" autocomplete="off">
+    <h2>订单台账登录</h2>
+    <p>请输入账号和密码</p>
+    <input id="loginUser" type="text" placeholder="账号" autocomplete="username" style="font-size:16px;letter-spacing:1px;text-align:center;margin-bottom:10px">
+    <input id="loginPass" type="password" placeholder="密码" autocomplete="current-password" style="font-size:16px;letter-spacing:1px;text-align:center">
   </div>
 </div>
 
@@ -289,13 +290,11 @@ label{font-size:13px;color:var(--ink-2);display:block;margin:0 0 6px;font-weight
     </div>
 
     <div class="set-card">
-      <h4><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.03-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.56-1.03 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.01a1.7 1.7 0 0 0 1.03-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.01a1.7 1.7 0 0 0 1.56 1.03H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.56 1.03z"/></svg>访问口令</h4>
-      <div class="desc">开启后进入本页面需输入口令（防他人打开，非加密保护）。</div>
-      <div class="set-row">
-        <div class="l">开启访问口令</div>
-        <div class="r"><div class="switch" id="pinSwitch" role="switch" tabindex="0"></div></div>
-      </div>
-      <div class="field" id="pinSetField" style="margin-top:10px"><label>设置口令</label><input id="pinSetInput" type="password" placeholder="输入 4 位以上口令" autocomplete="off"></div>
+      <h4><svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15" r="1.4" fill="#fff" stroke="none"/></svg>登录设置</h4>
+      <div class="desc">进入本页面需输入账号和密码（默认 admin / xiaokungege，可在此修改）。</div>
+      <div class="field" style="margin-top:10px"><label>登录账号</label><input id="loginSetUser" type="text" placeholder="账号" autocomplete="off"></div>
+      <div class="field"><label>登录密码</label><input id="loginSetPass" type="password" placeholder="密码（至少 4 位）" autocomplete="off"></div>
+      <button class="btn p" id="btnSaveLogin" style="margin-top:4px">保存登录设置</button>
     </div>
 
     <div class="set-card">
@@ -386,7 +385,7 @@ const DEFAULT_PRODS = [
   {key:'C', name:'推荐版', price:60, days:185, tag:'质保185天'}
 ];
 const LS_ORDERS='cert_orders_v1', LS_PRODS='cert_prods_v1', LS_CFG='cert_cfg_v1';
-let orders=[], prods=[], cfg={pin:null,repo:'',token:'',syncAuto:true};
+let orders=[], prods=[], cfg={user:'admin',pass:'xiaokungege',repo:'',token:'',syncAuto:true};
 
 /* ===== 数据层 ===== */
 function load(){
@@ -395,7 +394,7 @@ function load(){
   try{orders=JSON.parse(localStorage.getItem(LS_ORDERS))||[]}catch(e){orders=[]}
   if(!Array.isArray(orders))orders=[];
   try{cfg=JSON.parse(localStorage.getItem(LS_CFG))||{}}catch(e){cfg={}}
-  cfg={pin:cfg.pin||null,repo:cfg.repo||'',token:cfg.token||'',syncAuto:cfg.syncAuto!==false};
+  cfg={user:cfg.user||'admin',pass:cfg.pass||'xiaokungege',repo:cfg.repo||'',token:cfg.token||'',syncAuto:cfg.syncAuto!==false};
 }
 function saveOrders(){
   localStorage.setItem(LS_ORDERS,JSON.stringify(orders));
@@ -638,11 +637,9 @@ function showModal(html,title){
 function closeModal(){$('#modal').classList.add('hidden')}
 
 /* ===== 设置 ===== */
-let pinOn=false;
 function renderSettings(){
-  pinOn=!!cfg.pin;
-  $('#pinSwitch').classList.toggle('on',pinOn);
-  $('#pinSetField').style.display=pinOn?'':'none';
+  $('#loginSetUser').value=cfg.user||'';
+  $('#loginSetPass').value=cfg.pass||'';
   $('#setRepo').value=cfg.repo||'iosyyds/cert-data';
   $('#setToken').value=cfg.token||'';
   renderSyncState();
@@ -716,27 +713,31 @@ async function pullFromGithub(){
   }catch(e){toast('拉取失败：'+e.message)}
 }
 
-/* ===== PIN ===== */
+/* ===== 登录 ===== */
+function tryLogin(){
+  const u=$('#loginUser').value.trim();
+  const p=$('#loginPass').value;
+  if(u===cfg.user && p===cfg.pass){
+    $('#lock').classList.add('hidden'); toast('登录成功，欢迎回来');
+  }else{
+    toast('账号或密码错误'); $('#loginPass').value=''; $('#loginPass').focus();
+  }
+}
 function checkPin(){
   const l=$('#lock');
-  if(!cfg.pin){l.classList.add('hidden');return}
   l.classList.remove('hidden');
-  const inp=$('#pinInput');
-  inp.focus();
-  inp.onkeydown=e=>{
-    if(e.key==='Enter'){
-      if(inp.value===cfg.pin){l.classList.add('hidden');toast('欢迎回来');}
-      else{toast('口令错误');inp.value='';inp.focus();}
-    }
-  };
+  const lu=$('#loginUser'), lp=$('#loginPass');
+  lu.value=''; lp.value=''; lu.focus();
+  lu.onkeydown=e=>{if(e.key==='Enter')lp.focus()};
+  lp.onkeydown=e=>{if(e.key==='Enter')tryLogin()};
 }
-function savePin(){
-  const v=$('#pinSetInput').value;
-  if(!v){toast('请输入口令');return}
-  if(v.length<4){toast('口令至少 4 位');return}
-  cfg.pin=v; saveCfg(); toast('口令已设置'); renderSettings();
+function saveLogin(){
+  const u=$('#loginSetUser').value.trim();
+  const p=$('#loginSetPass').value;
+  if(!u){toast('请输入账号');return}
+  if(!p||p.length<4){toast('密码至少 4 位');return}
+  cfg.user=u; cfg.pass=p; saveCfg(); toast('登录设置已保存'); renderSettings();
 }
-function clearPin(){cfg.pin=null;saveCfg();$('#pinSetInput').value='';toast('已关闭访问口令');renderSettings()}
 
 /* ===== 事件绑定 ===== */
 document.addEventListener('click',e=>{
@@ -769,7 +770,7 @@ document.addEventListener('click',e=>{
   if(t.closest('#modal')){closeModal();return}
   if(t.closest('#btnSaveSync')){cfg.repo=$('#setRepo').value.trim();cfg.token=$('#setToken').value.trim();saveCfg();renderSyncState();toast('同步配置已保存，正在拉取云端数据…');pullFromGithub();return}
   if(t.closest('#btnTestSync')){testGithub();return}
-  if(t.closest('#pinSwitch')){if(pinOn){clearPin()}else{$('#pinSwitch').classList.add('on');$('#pinSetField').style.display='';$('#pinSetInput').focus()}return}
+  if(t.closest('#btnSaveLogin')){saveLogin();return}
   if(t.closest('#btnSaveProds')){saveProds();return}
   if(t.closest('#btnExport')){
     const blob=new Blob([JSON.stringify({orders,prods},null,2)],{type:'application/json'});
@@ -796,7 +797,7 @@ $('#importFile').addEventListener('change',e=>{
   rd.readAsText(f);
   e.target.value='';
 });
-$('#pinSetInput').addEventListener('keydown',e=>{if(e.key==='Enter')savePin()});
+$('#loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')tryLogin()});
 
 /* ===== 初始化 ===== */
 load();
