@@ -278,12 +278,12 @@ label{font-size:13px;color:var(--ink-2);display:block;margin:0 0 6px;font-weight
   <section class="view" id="view-settings">
     <div class="set-card">
       <h4><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v5h-5"/></svg>云端同步</h4>
-      <div class="desc">数据默认保存在本机浏览器。配置 GitHub 后可跨设备同步，每次改动自动保存到你的私有仓库。</div>
-      <div class="field"><label>数据仓库（owner/repo，建议私有仓库）</label><input id="setRepo" type="text" placeholder="例如 iosyyds/cert-data"></div>
-      <div class="field"><label>GitHub Token（需 contents 读写权限，仅存本机）</label><input id="setToken" type="password" placeholder="ghp_ 或 github_pat_ 开头的令牌" autocomplete="off"></div>
+      <div class="desc">打开网站自动从云端拉取订单；在本站新增/修改订单也会自动保存到云端。也可以直接把订单消息发给豆包，由豆包写入云端。</div>
+      <div class="field"><label>数据仓库（私有，推荐 iosyyds/cert-data）</label><input id="setRepo" type="text" placeholder="例如 iosyyds/cert-data"></div>
+      <div class="field"><label>GitHub Token（只需生成一次，仅存本机浏览器）</label><input id="setToken" type="password" placeholder="github_pat_ 开头令牌" autocomplete="off"></div>
       <div class="btn-row">
         <button class="btn ghost" id="btnTestSync">测试连接</button>
-        <button class="btn p" id="btnSaveSync">保存配置</button>
+        <button class="btn p" id="btnSaveSync">保存并同步</button>
       </div>
       <div class="sync-state" id="syncState"></div>
     </div>
@@ -643,7 +643,7 @@ function renderSettings(){
   pinOn=!!cfg.pin;
   $('#pinSwitch').classList.toggle('on',pinOn);
   $('#pinSetField').style.display=pinOn?'':'none';
-  $('#setRepo').value=cfg.repo||'';
+  $('#setRepo').value=cfg.repo||'iosyyds/cert-data';
   $('#setToken').value=cfg.token||'';
   renderSyncState();
   renderProdEditor();
@@ -710,7 +710,8 @@ async function pullFromGithub(){
     if(!data){toast('云端暂无数据');return}
     const arr=JSON.parse(data.txt);
     if(!Array.isArray(arr))throw new Error('数据格式错误');
-    orders=arr; saveOrders(); localStorage.setItem(LS_ORDERS,JSON.stringify(orders));
+    orders=arr;
+    localStorage.setItem(LS_ORDERS,JSON.stringify(orders));
     toast('已从云端拉取 '+orders.length+' 条'); renderDash();renderOrders();renderNav();
   }catch(e){toast('拉取失败：'+e.message)}
 }
@@ -766,7 +767,7 @@ document.addEventListener('click',e=>{
   if(t.closest('[data-af]')){openAf(t.closest('[data-af]').dataset.af);return}
   if(t.closest('[data-edit]')){openOrder(t.closest('[data-edit]').dataset.edit);closeModal();return}
   if(t.closest('#modal')){closeModal();return}
-  if(t.closest('#btnSaveSync')){cfg.repo=$('#setRepo').value.trim();cfg.token=$('#setToken').value.trim();saveCfg();renderSyncState();toast('同步配置已保存');return}
+  if(t.closest('#btnSaveSync')){cfg.repo=$('#setRepo').value.trim();cfg.token=$('#setToken').value.trim();saveCfg();renderSyncState();toast('同步配置已保存，正在拉取云端数据…');pullFromGithub();return}
   if(t.closest('#btnTestSync')){testGithub();return}
   if(t.closest('#pinSwitch')){if(pinOn){clearPin()}else{$('#pinSwitch').classList.add('on');$('#pinSetField').style.display='';$('#pinSetInput').focus()}return}
   if(t.closest('#btnSaveProds')){saveProds();return}
@@ -799,22 +800,17 @@ $('#pinSetInput').addEventListener('keydown',e=>{if(e.key==='Enter')savePin()});
 
 /* ===== 初始化 ===== */
 load();
-// 若无备份数据则写入示例数据（可删除）
-if(!localStorage.getItem('cert_seeded_v1')){
-  const now=new Date();
-  const p=n=>String(n).padStart(2,'0');
-  const seed=[
-    {id:'CG'+now.getFullYear()+p(now.getMonth()+1)+p(now.getDate())+'-001',channel:'微信',prod:'A',price:90,time:nowLocal().slice(0,10)+'T10:30',customer:'微信: apple_user',udid:'00008120-001A1B2C3D4E5F60718293A4B5C6D7E',cert:'P12-20261001.mobileprovision',note:'老客户',expire:addDays(nowLocal(),360),afterSales:[],refunded:false},
-    {id:'CG'+now.getFullYear()+p(now.getMonth()+1)+p(now.getDate())+'-002',channel:'网站',prod:'C',price:60,time:nowLocal().slice(0,10)+'T14:05',customer:'QQ: 12345678',udid:'00008110-002A2B3C4D5E6F708192A3B4C5D6E7F',cert:'提取码: AB12CD',note:'',expire:addDays(nowLocal(),185),afterSales:[],refunded:false},
-    {id:'CG'+now.getFullYear()+p(now.getMonth()+1)+p(now.getDate())+'-003',channel:'微信',prod:'B',price:30,time:nowLocal().slice(0,10)+'T09:00',customer:'微信: ios_dev',udid:'00008130-003A3B4C5D6E7F809192A3B4C5D6E7F8',cert:'描述文件已发',note:'测试',expire:addDays(nowLocal(),45),afterSales:[{t:'重签',n:'掉签一次',d:new Date().toISOString()}],refunded:false}
-  ];
-  orders=seed;
-  localStorage.setItem(LS_ORDERS,JSON.stringify(orders));
-  localStorage.setItem('cert_seeded_v1','1');
-}
+// 移除旧的示例数据标记（如果存在）
+localStorage.removeItem('cert_seeded_v1');
 renderNav();
 switchTab('dash');
 checkPin();
+// 若已配置云端同步，自动拉取云端数据
+if(cfg.repo && cfg.token){
+  setTimeout(()=>{
+    pullFromGithub();
+  }, 300);
+}
 </script>
 </body>
 </html>
