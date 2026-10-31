@@ -347,7 +347,7 @@ label{font-size:13px;color:var(--ink-2);display:block;margin:0 0 6px;font-weight
       <div class="field"><label>订单号</label><input id="fId" type="text" placeholder="留空自动生成"></div>
     </div>
     <div class="field"><label>UDID（售后必需）</label><input id="fUdid" type="text" placeholder="设备 UDID"></div>
-    <div class="field"><label>证书文件 / 提取码</label><input id="fCert" type="text" placeholder="P12、描述文件或提取链接"></div>
+    <div class="field"><label>签名码</label><input id="fCert" type="text" placeholder="输入签名码，如 XQ78DFFD629C7"></div>
     <div class="field"><label>备注</label><textarea id="fNote" placeholder="客户要求等"></textarea></div>
     <div class="btn-row">
       <button class="btn d" id="btnDelOrder" style="display:none">删除</button>
@@ -612,7 +612,7 @@ function orderDetail(id){
     <div class="desc">渠道 ${esc(o.channel)} ｜ 售价 ${fmtPrice(o.price)} ｜ 状态 <span class="badge ${s.c}">${s.t}</span></div>
     <div class="set-row"><span class="l">客户</span><span class="r" style="font-size:13px">${esc(o.customer||'—')}</span></div>
     <div class="set-row"><span class="l">UDID</span><span class="r" style="font-size:12px;word-break:break-all;max-width:60%">${esc(o.udid||'—')}</span></div>
-    <div class="set-row"><span class="l">证书文件</span><span class="r" style="font-size:12px;word-break:break-all;max-width:60%">${esc(o.cert||'—')}</span></div>
+    <div class="set-row"><span class="l">签名码</span><span class="r" style="font-size:12px;word-break:break-all;max-width:60%">${esc(o.cert||'—')}</span></div>
     <div class="set-row"><span class="l">下单时间</span><span class="r">${esc((o.time||'').replace('T',' '))}</span></div>
     <div class="set-row"><span class="l">质保到期</span><span class="r">${esc(o.expire||'—')}</span></div>
     <div class="set-row"><span class="l">备注</span><span class="r" style="font-size:12px;max-width:60%;text-align:right">${esc(o.note||'—')}</span></div>
